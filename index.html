@@ -1,182 +1,954 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rune Selector</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0 }
-    html, body {
-      width: 100%;
+    :root{
+      --bg0:#07080b;
+      --bg1:#0b0f16;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --border: rgba(255,255,255,.12);
+      --border2: rgba(255,255,255,.18);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.66);
+      --muted2: rgba(255,255,255,.52);
+      --accent: #7c5cff;
+      --accent2:#2fe8c3;
+      --danger:#ff4d6d;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 800px at 20% 15%, rgba(124,92,255,.22), transparent 60%),
+        radial-gradient(900px 700px at 85% 20%, rgba(47,232,195,.16), transparent 55%),
+        radial-gradient(900px 700px at 50% 120%, rgba(255,77,109,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow:hidden; /* page stays fixed; internal panels can scroll */
+    }
+
+    /* subtle grain */
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      opacity:.10;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+    }
+
+    .wrap{
       height: 100%;
-      background: #111;
-      color: #fff;
-      font-family: sans-serif;
-      overflow: hidden;    /* disable all scrolling */
-    }
-
-    .container {
-      display: flex;
-      flex-direction: column;
-      height: calc(100% - 100px);
-      margin: 50px;
-    }
-
-    .header {
-      text-align: center;
-      padding: 0.5rem 0;
-    }
-    .header h1 {
-      position: relative;
-      top: -5px;           /* move the title up by 5px */
-    }
-
-    .grid {
-      flex: 1;
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 1rem;           /* increased gap for aesthetics */
-      padding: 0 1rem;
-    }
-
-    .rune-button {
-      background: #222;
-      color: #fff;
-      font-size: 1.1rem;   /* slightly larger text */
-      display: flex;
-      flex-direction: column;
+      display:flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.2);
-      padding: 0.75rem 0;
-      user-select: none;
-      transition: background 0.2s;
-    }
-    .rune-button .symbol {
-      font-size: 2rem;     /* larger rune symbol */
-      line-height: 1;
-    }
-    .rune-button .name {
-      margin-top: 0.4rem;
-      font-size: 1rem;     /* larger rune name */
-    }
-    .rune-button:hover {
-      background: #2c2c2c;
+      padding: 18px;
     }
 
-    .selected-container {
-      padding: 1rem;
+    .app{
+      width: min(1320px, 100%);
+      height: min(900px, 100%);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: calc(var(--radius) + 6px);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display:flex;
+      flex-direction: column;
+      overflow:hidden;
     }
-    .selected-container div {
-      margin-bottom: 0.5rem;
-      font-weight: bold;
+
+    .topbar{
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
-    .selected-container textarea {
-      width: 100%;
-      height: 100px;
-      background: #222;
-      color: #fff;
-      resize: none;
-      padding: 0.5rem;
-      font-size: 1rem;
+
+    .title{
+      display:flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 260px;
+    }
+    .title h1{
+      margin:0;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: .3px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .title p{
+      margin:0;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .controls{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .search{
+      position: relative;
+      width: min(440px, 46vw);
+      min-width: 240px;
+    }
+
+    .search input{
+      width:100%;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.20);
+      color: var(--text);
+      padding: 11px 42px 11px 42px;
+      outline:none;
+      transition: border-color .15s, background .15s, box-shadow .15s;
+    }
+    .search input:focus{
+      border-color: rgba(124,92,255,.55);
+      box-shadow: 0 0 0 4px rgba(124,92,255,.18);
+      background: rgba(0,0,0,.28);
+    }
+    .search .icon{
+      position:absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity:.75;
+      font-size: 14px;
+      color: var(--muted);
+      user-select:none;
+    }
+    .search button{
+      position:absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
       border: none;
-      outline: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 8px 10px;
+      border-radius: 999px;
+      transition: background .15s, color .15s;
+    }
+    .search button:hover{ background: rgba(255,255,255,.06); color: var(--text); }
+
+    .stat{
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      padding: 10px 12px;
+      border-radius: 14px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 150px;
+    }
+    .stat .n{
+      width: 32px; height: 32px;
+      border-radius: 10px;
+      display:grid;
+      place-items:center;
+      background: linear-gradient(135deg, rgba(124,92,255,.22), rgba(47,232,195,.16));
+      border: 1px solid rgba(255,255,255,.12);
+      font-weight: 900;
+    }
+    .stat .label{
+      display:flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+    .stat .label span:nth-child(1){
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .stat .label span:nth-child(2){
+      font-size: 12px;
+      color: var(--muted2);
     }
 
-    .footer {
-      display: flex;
+    .content{
+      flex:1;
+      display:grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap: 16px;
+      padding: 16px;
+      min-height: 0;
+    }
+
+    @media (max-width: 980px){
+      .content{ grid-template-columns: 1fr; }
+      .search{ width: 100%; min-width: unset; }
+      .title{ min-width: unset; }
+      .stat{ width: 100%; justify-content: space-between; }
+    }
+
+    /* GRID */
+    .panel{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      border-radius: var(--radius);
+      overflow:hidden;
+      min-height: 0;
+      display:flex;
+      flex-direction: column;
+    }
+
+    .panel-hd{
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel-hd .left{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .panel-hd h2{
+      margin:0;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: .35px;
+      text-transform: uppercase;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .hint{
+      font-size: 12px;
+      color: var(--muted2);
+      white-space: nowrap;
+    }
+    @media (max-width: 980px){
+      .hint{ display:none; }
+    }
+
+    .grid{
+      padding: 14px;
+      display:grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      overflow:auto;
+      min-height: 0;
+    }
+
+    /* nicer scrollbars */
+    .grid::-webkit-scrollbar,
+    .chips::-webkit-scrollbar{ height: 10px; width: 10px; }
+    .grid::-webkit-scrollbar-thumb,
+    .chips::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,.12);
+      border-radius: 999px;
+    }
+    .grid::-webkit-scrollbar-thumb:hover,
+    .chips::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.18); }
+
+    @media (max-width: 1180px){
+      .grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px){
+      .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .rune{
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius: 16px;
+      padding: 12px;
+      min-height: 132px;
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+      position:relative;
+      transition: transform .15s, border-color .15s, background .15s;
+      user-select:none;
+      overflow:hidden;
+      min-width:0;
+    }
+
+    .rune:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+    }
+
+    .rune:focus-within{
+      border-color: rgba(124,92,255,.55);
+      box-shadow: 0 0 0 4px rgba(124,92,255,.16);
+    }
+
+    .rune .meta{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 62px;
+    }
+
+    .rune .name{
+      display:flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .rune .name b{
+      font-size: 14px;
+      letter-spacing: .2px;
+    }
+    .rune .name small{
+      color: var(--muted2);
+      font-size: 12px;
+    }
+
+    .symbol{
+      width: 44px; height: 44px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      font-size: 22px;
+      background: rgba(0,0,0,.24);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .actions{
+      margin-top:auto;
+      display:grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .btn{
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 9px 8px;
+      font-weight: 800;
+      font-size: 12px;
+      cursor:pointer;
+      transition: transform .08s, background .15s, border-color .15s, opacity .15s;
+      display:flex;
+      align-items:center;
       justify-content: center;
-      gap: 1rem;
-      padding: 1rem 0;
+      gap: 8px;
+      outline:none;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .footer button {
-      background: #222;
-      color: #fff;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      cursor: pointer;
-      border: none;
-      outline: none;
+    .btn:hover{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.16);
     }
-    <link rel>
+    .btn:active{ transform: translateY(1px); }
+
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(124,92,255,.26), rgba(124,92,255,.10));
+      border-color: rgba(124,92,255,.35);
+    }
+    .btn.primary:hover{ border-color: rgba(124,92,255,.55); }
+
+    .btn.inv{
+      background: linear-gradient(135deg, rgba(47,232,195,.18), rgba(47,232,195,.07));
+      border-color: rgba(47,232,195,.28);
+    }
+    .btn.inv:hover{ border-color: rgba(47,232,195,.48); }
+
+    .btn:disabled{
+      opacity:.38;
+      cursor:not-allowed;
+      transform:none;
+    }
+
+    /* RIGHT: selection */
+    .side{
+      padding: 0;
+    }
+
+    .side-body{
+      padding: 14px;
+      display:flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow:auto;
+      min-height: 0;
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 2px;
+      max-height: 260px;
+      overflow:auto;
+    }
+
+    .chip{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      border-radius: 999px;
+      padding: 8px 10px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .chip .tag{
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+    .chip .tag.inv{
+      color: rgba(47,232,195,.95);
+    }
+    .chip button{
+      border:none;
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor:pointer;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      display:grid;
+      place-items:center;
+      transition: background .15s;
+    }
+    .chip button:hover{ background: rgba(255,255,255,.10); }
+
+    .outbox{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      border-radius: 16px;
+      overflow:hidden;
+    }
+
+    .outbox .row{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .outbox .row b{
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .35px;
+      text-transform: uppercase;
+    }
+
+    .mini-actions{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+    }
+
+    .mini-btn{
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-weight: 900;
+      font-size: 12px;
+      cursor:pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .mini-btn:hover{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
+
+    textarea{
+      width:100%;
+      height: 120px;
+      resize:none;
+      border:none;
+      outline:none;
+      padding: 12px;
+      background: transparent;
+      color: rgba(255,255,255,.88);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+
+    .footer{
+      padding: 14px 16px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer .left,
+    .footer .right{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: var(--muted);
+    }
+
+    .danger{
+      border-color: rgba(255,77,109,.35) !important;
+      background: linear-gradient(135deg, rgba(255,77,109,.18), rgba(255,77,109,.06)) !important;
+    }
+    .danger:hover{ border-color: rgba(255,77,109,.55) !important; }
+
+    /* toast */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.62);
+      border: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.92);
+      padding: 10px 12px;
+      border-radius: 14px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.55);
+      font-size: 12.5px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s, transform .18s;
+      transform: translateX(-50%) translateY(10px);
+      max-width: min(720px, calc(100vw - 36px));
+      text-align:center;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(0);
+    }
   </style>
 </head>
+
 <body>
+  <div class="wrap">
+    <div class="app" role="application" aria-label="Rune Selector">
+      <div class="topbar">
+        <div class="title">
+          <h1>Rune Selector <span class="badge">v2</span></h1>
+          <p>Pick runes quickly. Use <span class="kbd">Shift</span> + click for Inv. (when allowed).</p>
+        </div>
 
-  <div class="container">
-    <div class="header">
-      <h1>Select Your Runes</h1>
-    </div>
+        <div class="controls">
+          <div class="search">
+            <span class="icon">⌕</span>
+            <input id="search" type="text" placeholder="Search rune name (e.g., Fehu, Algiz)..." autocomplete="off" />
+            <button id="clearSearch" type="button" aria-label="Clear search">×</button>
+          </div>
 
-    <div class="grid">
-      <button class="rune-button"><span class="symbol">ᚠ</span><span class="name">Fehu</span></button>
-      <button class="rune-button"><span class="symbol">ᚢ</span><span class="name">Uruz</span></button>
-      <button class="rune-button"><span class="symbol">ᚦ</span><span class="name">Thurisaz</span></button>
-      <button class="rune-button"><span class="symbol">ᚨ</span><span class="name">Ansuz</span></button>
-      <button class="rune-button"><span class="symbol">ᚱ</span><span class="name">Raidho</span></button>
-      <button class="rune-button"><span class="symbol">ᚲ</span><span class="name">Kenaz</span></button>
+          <div class="stat" aria-live="polite">
+            <div class="n" id="count">0</div>
+            <div class="label">
+              <span>Selected</span>
+              <span id="subcount">0 runes</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <button class="rune-button"><span class="symbol">ᚷ</span><span class="name">Gebo</span></button>
-      <button class="rune-button"><span class="symbol">ᚹ</span><span class="name">Wunjo</span></button>
-      <button class="rune-button"><span class="symbol">ᚺ</span><span class="name">Hagalaz</span></button>
-      <button class="rune-button"><span class="symbol">ᚾ</span><span class="name">Nauthiz</span></button>
-      <button class="rune-button"><span class="symbol">ᛁ</span><span class="name">Isa</span></button>
-      <button class="rune-button"><span class="symbol">ᛃ</span><span class="name">Jera</span></button>
+      <div class="content">
+        <section class="panel">
+          <div class="panel-hd">
+            <div class="left">
+              <h2>Runes</h2>
+              <div class="hint">Tip: click “Norm” / “Inv.”, or Shift+click a tile.</div>
+            </div>
+            <div class="hint" id="matchInfo"></div>
+          </div>
 
-      <button class="rune-button"><span class="symbol">ᛇ</span><span class="name">Eihwaz</span></button>
-      <button class="rune-button"><span class="symbol">ᛈ</span><span class="name">Perthro</span></button>
-      <button class="rune-button"><span class="symbol">ᛉ</span><span class="name">Algiz</span></button>
-      <button class="rune-button"><span class="symbol">ᛋ</span><span class="name">Sowilo</span></button>
-      <button class="rune-button"><span class="symbol">ᛏ</span><span class="name">Tiwaz</span></button>
-      <button class="rune-button"><span class="symbol">ᛒ</span><span class="name">Berkano</span></button>
+          <div class="grid" id="grid" tabindex="0" aria-label="Rune grid"></div>
+        </section>
 
-      <button class="rune-button"><span class="symbol">ᛖ</span><span class="name">Ehwaz</span></button>
-      <button class="rune-button"><span class="symbol">ᛗ</span><span class="name">Mannaz</span></button>
-      <button class="rune-button"><span class="symbol">ᛚ</span><span class="name">Laguz</span></button>
-      <button class="rune-button"><span class="symbol">ᛝ</span><span class="name">Ingwaz</span></button>
-      <button class="rune-button"><span class="symbol">ᛞ</span><span class="name">Dagaz</span></button>
-      <button class="rune-button"><span class="symbol">ᛟ</span><span class="name">Othala</span></button>
-    </div>
+        <aside class="panel side">
+          <div class="panel-hd">
+            <div class="left">
+              <h2>Selection</h2>
+              <div class="hint">Click × to remove a rune.</div>
+            </div>
+          </div>
 
-    <div class="selected-container">
-      <div>Selected Runes:</div>
-      <textarea readonly></textarea>
-    </div>
+          <div class="side-body">
+            <div class="chips" id="chips" aria-label="Selected runes list"></div>
 
-    <div class="footer">
-      <button id="reset">Reset</button>
-      <button id="copy">Copy</button>
-      <button id="remove">Remove Last Rune</button>
+            <div class="outbox">
+              <div class="row">
+                <b>Text output</b>
+                <div class="mini-actions">
+                  <button class="mini-btn" id="copy" type="button">Copy</button>
+                  <button class="mini-btn" id="undo" type="button">Undo</button>
+                </div>
+              </div>
+              <textarea id="out" readonly aria-label="Selected runes output"></textarea>
+            </div>
+
+            <div style="color: var(--muted2); font-size: 12.5px; line-height: 1.45;">
+              <div style="margin-bottom:8px;"><b style="color:var(--muted)">Invertible rule:</b> only 16 runes allow inverted selections.</div>
+              <div>Non-invertible runes will show a disabled “Inverted” button.</div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="footer">
+        <div class="left">
+          <button class="btn danger" id="reset" type="button">Reset</button>
+          <span class="kbd">Backspace</span><span style="color:var(--muted2); font-size:12px;">Undo</span>
+        </div>
+        <div class="right" style="color: var(--muted2); font-size: 12px;">
+          Auto-saves your selection locally.
+        </div>
+      </div>
     </div>
   </div>
 
+  <div class="toast" id="toast" aria-live="polite"></div>
+
   <script>
-    const textarea = document.querySelector('textarea');
-    document.querySelectorAll('.rune-button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const name = btn.querySelector('.name').textContent;
-        textarea.value = textarea.value
-          ? textarea.value + ', ' + name
-          : name;
+    // --- DATA ---
+    const RUNES = [
+      {name:"Fehu",     symbol:"ᚠ"},
+      {name:"Uruz",     symbol:"ᚢ"},
+      {name:"Thurisaz", symbol:"ᚦ"},
+      {name:"Ansuz",    symbol:"ᚨ"},
+      {name:"Raidho",   symbol:"ᚱ"},
+      {name:"Kenaz",    symbol:"ᚲ"},
+      {name:"Gebo",     symbol:"ᚷ"},
+      {name:"Wunjo",    symbol:"ᚹ"},
+      {name:"Hagalaz",  symbol:"ᚺ"},
+      {name:"Nauthiz",  symbol:"ᚾ"},
+      {name:"Isa",      symbol:"ᛁ"},
+      {name:"Jera",     symbol:"ᛃ"},
+      {name:"Eihwaz",   symbol:"ᛇ"},
+      {name:"Perthro",  symbol:"ᛈ"},
+      {name:"Algiz",    symbol:"ᛉ"},
+      {name:"Sowilo",   symbol:"ᛋ"},
+      {name:"Tiwaz",    symbol:"ᛏ"},
+      {name:"Berkano",  symbol:"ᛒ"},
+      {name:"Ehwaz",    symbol:"ᛖ"},
+      {name:"Mannaz",   symbol:"ᛗ"},
+      {name:"Laguz",    symbol:"ᛚ"},
+      {name:"Ingwaz",   symbol:"ᛝ"},
+      {name:"Dagaz",    symbol:"ᛞ"},
+      {name:"Othala",   symbol:"ᛟ"},
+    ];
+
+    // Only these 16 can be inverted (same rule as your original)
+    const INVERTIBLE = new Set([
+      "Fehu","Uruz","Thurisaz","Ansuz","Raidho","Kenaz","Wunjo","Nauthiz",
+      "Perthro","Algiz","Tiwaz","Berkano","Ehwaz","Mannaz","Laguz","Othala"
+    ]);
+
+    // --- STATE ---
+    /** @type {{name:string, variant:"nor"|"inv"}[]} */
+    let selected = [];
+
+    const els = {
+      grid: document.getElementById("grid"),
+      chips: document.getElementById("chips"),
+      out: document.getElementById("out"),
+      count: document.getElementById("count"),
+      subcount: document.getElementById("subcount"),
+      search: document.getElementById("search"),
+      clearSearch: document.getElementById("clearSearch"),
+      matchInfo: document.getElementById("matchInfo"),
+      reset: document.getElementById("reset"),
+      copy: document.getElementById("copy"),
+      undo: document.getElementById("undo"),
+      toast: document.getElementById("toast"),
+    };
+
+    const STORAGE_KEY = "rune_selector_v2_selected";
+
+    function toast(msg){
+      els.toast.textContent = msg;
+      els.toast.classList.add("show");
+      window.clearTimeout(toast._t);
+      toast._t = window.setTimeout(() => els.toast.classList.remove("show"), 1400);
+    }
+
+    function save(){
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
+      }catch(e){}
+    }
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return;
+        const parsed = JSON.parse(raw);
+        if(Array.isArray(parsed)){
+          selected = parsed
+            .filter(x => x && typeof x.name === "string" && (x.variant === "nor" || x.variant === "inv"))
+            .slice(0, 200);
+        }
+      }catch(e){}
+    }
+
+    function setCounts(){
+      const n = selected.length;
+      els.count.textContent = String(n);
+      els.subcount.textContent = n === 1 ? "1 rune" : `${n} runes`;
+    }
+
+    function renderOutput(){
+      const text = selected.map(x => x.variant === "inv" ? `${x.name} (Inv)` : x.name).join(", ");
+      els.out.value = text;
+      setCounts();
+    }
+
+    function renderChips(){
+      els.chips.innerHTML = "";
+      if(selected.length === 0){
+        const empty = document.createElement("div");
+        empty.style.color = "var(--muted2)";
+        empty.style.fontSize = "12.5px";
+        empty.textContent = "No runes yet. Pick from the grid.";
+        els.chips.appendChild(empty);
+        return;
+      }
+
+      selected.forEach((x, idx) => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+
+        const tag = document.createElement("span");
+        tag.className = "tag" + (x.variant === "inv" ? " inv" : "");
+        tag.textContent = x.variant === "inv" ? "Inv" : "Nor";
+
+        const label = document.createElement("span");
+        label.textContent = x.name;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.setAttribute("aria-label", `Remove ${x.name}`);
+        btn.textContent = "×";
+        btn.addEventListener("click", () => {
+          selected.splice(idx, 1);
+          save();
+          renderChips();
+          renderOutput();
+        });
+
+        chip.appendChild(tag);
+        chip.appendChild(label);
+        chip.appendChild(btn);
+        els.chips.appendChild(chip);
       });
+    }
+
+    function addRune(name, variant){
+      if(variant === "inv" && !INVERTIBLE.has(name)){
+        toast(`${name} cannot be inverted.`);
+        return;
+      }
+      selected.push({name, variant});
+      save();
+      renderChips();
+      renderOutput();
+    }
+
+    function undo(){
+      if(selected.length === 0) return;
+      selected.pop();
+      save();
+      renderChips();
+      renderOutput();
+    }
+
+    function reset(){
+      selected = [];
+      save();
+      renderChips();
+      renderOutput();
+      toast("Reset.");
+    }
+
+    function copy(){
+      const text = els.out.value || "";
+      if(!text){
+        toast("Nothing to copy.");
+        return;
+      }
+
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(() => toast("Copied."));
+      }else{
+        els.out.focus();
+        els.out.select();
+        document.execCommand("copy");
+        window.getSelection().removeAllRanges();
+        toast("Copied.");
+      }
+    }
+
+    function makeRuneCard(r){
+      const card = document.createElement("div");
+      card.className = "rune";
+      card.dataset.name = r.name;
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const left = document.createElement("div");
+      left.className = "name";
+      const b = document.createElement("b");
+      b.textContent = r.name;
+      const sm = document.createElement("small");
+      sm.textContent = INVERTIBLE.has(r.name) ? "Invertible" : "Not invertible";
+      left.appendChild(b);
+      left.appendChild(sm);
+
+      const sym = document.createElement("div");
+      sym.className = "symbol";
+      sym.textContent = r.symbol;
+
+      meta.appendChild(left);
+      meta.appendChild(sym);
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const nor = document.createElement("button");
+      nor.className = "btn primary";
+      nor.type = "button";
+      nor.textContent = "Norm";
+      nor.addEventListener("click", () => addRune(r.name, "nor"));
+
+      const inv = document.createElement("button");
+      inv.className = "btn inv";
+      inv.type = "button";
+      inv.textContent = "Inv.";
+      inv.disabled = !INVERTIBLE.has(r.name);
+      inv.title = inv.disabled ? "This rune is not invertible." : "Add inverted rune";
+      inv.addEventListener("click", () => addRune(r.name, "inv"));
+
+      actions.appendChild(nor);
+      actions.appendChild(inv);
+
+      // Shift+click anywhere on card = inverted (if allowed), else normal
+      card.addEventListener("click", (e) => {
+        // ignore clicks on buttons (already handled)
+        if(e.target && e.target.closest("button")) return;
+        const variant = e.shiftKey ? "inv" : "nor";
+        addRune(r.name, variant);
+      });
+
+      // Keyboard: Enter = normal; Shift+Enter = inverted (if allowed)
+      card.tabIndex = 0;
+      card.setAttribute("role", "button");
+      card.setAttribute("aria-label", `${r.name}. Enter to add normal. Shift+Enter to add inverted if allowed.`);
+      card.addEventListener("keydown", (e) => {
+        if(e.key !== "Enter") return;
+        const variant = e.shiftKey ? "inv" : "nor";
+        addRune(r.name, variant);
+      });
+
+      card.appendChild(meta);
+      card.appendChild(actions);
+      return card;
+    }
+
+    function renderGrid(){
+      const q = (els.search.value || "").trim().toLowerCase();
+      els.grid.innerHTML = "";
+
+      const items = RUNES.filter(r => r.name.toLowerCase().includes(q));
+      items.forEach(r => els.grid.appendChild(makeRuneCard(r)));
+
+      if(q){
+        els.matchInfo.textContent = `${items.length} match${items.length === 1 ? "" : "es"}`;
+      }else{
+        els.matchInfo.textContent = "";
+      }
+    }
+
+    // --- EVENTS ---
+    els.search.addEventListener("input", renderGrid);
+
+    els.clearSearch.addEventListener("click", () => {
+      els.search.value = "";
+      renderGrid();
+      els.search.focus();
     });
 
-    document.getElementById('reset').addEventListener('click', () => {
-      textarea.value = '';
+    els.reset.addEventListener("click", reset);
+    els.undo.addEventListener("click", undo);
+    els.copy.addEventListener("click", copy);
+
+    // Backspace = undo, unless typing in an input
+    window.addEventListener("keydown", (e) => {
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+      const typing = tag === "input" || tag === "textarea";
+      if(typing) return;
+
+      if(e.key === "Backspace"){
+        e.preventDefault();
+        undo();
+      }
+
+      // Ctrl/Cmd + C = copy output
+      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c"){
+        copy();
+      }
     });
 
-    document.getElementById('remove').addEventListener('click', () => {
-      const items = textarea.value.split(/\s*,\s*/);
-      items.pop();
-      textarea.value = items.join(', ');
-    });
-
-    document.getElementById('copy').addEventListener('click', () => {
-      textarea.select();
-      document.execCommand('copy');
-    });
+    // --- INIT ---
+    load();
+    renderGrid();
+    renderChips();
+    renderOutput();
   </script>
-
 </body>
 </html>
