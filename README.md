@@ -1,9 +1,1 @@
-Joulie 2 is a full rebuild of Joulie 1.
-
-- New app-style UI + responsive layout
-- Search runes by name with match counter
-- Normal and Inverted selection (Inv only when allowed)
-- Selection chips with remove (×) + Undo (button / Backspace)
-- Keyboard shortcuts: Shift+Click / Shift+Enter for inverted picks
-- Autosave/restore selections via localStorage
-- Improved Copy (Clipboard API + fallback)
+Joulie is a lightweight, browser-based rune selector: it lets you browse and search a set of runes, choose them in sequence (including inverted variants when applicable), and instantly produces a clean, copy-ready list of your selection. It’s designed for quick divination spreads and note-taking, with simple selection management (remove/undo) and automatic saving so your last pick is preserved.
