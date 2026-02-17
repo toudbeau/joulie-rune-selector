@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- Mobile-first, tuned for Xiaomi 11 Lite 5G NE (approx. 393 CSS px wide) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Rune Selector</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 
@@ -22,6 +23,12 @@
       --danger:#ff4d6d;
       --shadow: 0 18px 60px rgba(0,0,0,.55);
       --radius: 18px;
+
+      /* Bottom sheet sizes (mobile) */
+      --sheet-collapsed: 78px;
+      --sheet-expanded: 70vh;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
     }
 
     *{ box-sizing:border-box; }
@@ -35,7 +42,8 @@
         radial-gradient(900px 700px at 85% 20%, rgba(47,232,195,.16), transparent 55%),
         radial-gradient(900px 700px at 50% 120%, rgba(255,77,109,.10), transparent 60%),
         linear-gradient(180deg, var(--bg0), var(--bg1));
-      overflow:hidden; /* page stays fixed; internal panels can scroll */
+      overflow:hidden; /* internal panels scroll */
+      padding-bottom: var(--safe-b);
     }
 
     /* subtle grain */
@@ -68,6 +76,7 @@
       display:flex;
       flex-direction: column;
       overflow:hidden;
+      position: relative;
     }
 
     .topbar{
@@ -206,14 +215,7 @@
       min-height: 0;
     }
 
-    @media (max-width: 980px){
-      .content{ grid-template-columns: 1fr; }
-      .search{ width: 100%; min-width: unset; }
-      .title{ min-width: unset; }
-      .stat{ width: 100%; justify-content: space-between; }
-    }
-
-    /* GRID */
+    /* PANEL */
     .panel{
       border: 1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.14);
@@ -255,9 +257,6 @@
       color: var(--muted2);
       white-space: nowrap;
     }
-    @media (max-width: 980px){
-      .hint{ display:none; }
-    }
 
     .grid{
       padding: 14px;
@@ -266,6 +265,7 @@
       gap: 12px;
       overflow:auto;
       min-height: 0;
+      -webkit-overflow-scrolling: touch;
     }
 
     /* nicer scrollbars */
@@ -344,6 +344,7 @@
       font-size: 22px;
       background: rgba(0,0,0,.24);
       border: 1px solid rgba(255,255,255,.10);
+      flex: 0 0 auto;
     }
 
     .actions{
@@ -373,6 +374,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      touch-action: manipulation;
     }
     .btn:hover{
       background: rgba(255,255,255,.06);
@@ -398,11 +400,8 @@
       transform:none;
     }
 
-    /* RIGHT: selection */
-    .side{
-      padding: 0;
-    }
-
+    /* RIGHT: selection (desktop default) */
+    .side{ padding: 0; }
     .side-body{
       padding: 14px;
       display:flex;
@@ -410,6 +409,7 @@
       gap: 12px;
       overflow:auto;
       min-height: 0;
+      -webkit-overflow-scrolling: touch;
     }
 
     .chips{
@@ -419,6 +419,7 @@
       padding: 2px;
       max-height: 260px;
       overflow:auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .chip{
@@ -431,14 +432,13 @@
       gap: 10px;
       font-size: 12px;
       white-space: nowrap;
+      max-width: 100%;
     }
     .chip .tag{
       font-weight: 900;
       letter-spacing: .2px;
     }
-    .chip .tag.inv{
-      color: rgba(47,232,195,.95);
-    }
+    .chip .tag.inv{ color: rgba(47,232,195,.95); }
     .chip button{
       border:none;
       background: rgba(255,255,255,.06);
@@ -450,6 +450,8 @@
       display:grid;
       place-items:center;
       transition: background .15s;
+      flex: 0 0 auto;
+      touch-action: manipulation;
     }
     .chip button:hover{ background: rgba(255,255,255,.10); }
 
@@ -491,6 +493,7 @@
       font-size: 12px;
       cursor:pointer;
       transition: background .15s, border-color .15s;
+      touch-action: manipulation;
     }
     .mini-btn:hover{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
 
@@ -509,7 +512,7 @@
     }
 
     .footer{
-      padding: 14px 16px;
+      padding: 14px 16px calc(14px + var(--safe-b));
       border-top: 1px solid rgba(255,255,255,.10);
       display:flex;
       align-items:center;
@@ -546,7 +549,7 @@
     .toast{
       position: fixed;
       left: 50%;
-      bottom: 18px;
+      bottom: calc(18px + var(--safe-b));
       transform: translateX(-50%);
       background: rgba(0,0,0,.62);
       border: 1px solid rgba(255,255,255,.16);
@@ -563,10 +566,222 @@
       transform: translateX(-50%) translateY(10px);
       max-width: min(720px, calc(100vw - 36px));
       text-align:center;
+      z-index: 60;
     }
     .toast.show{
       opacity:1;
       transform: translateX(-50%) translateY(0);
+    }
+
+    /* ---------------------------
+       MOBILE STRUCTURE (Xiaomi 11 Lite 5G NE)
+       - Single primary grid panel.
+       - Selection becomes a bottom sheet (collapsed by default).
+       - Search + count remain at top; large touch targets.
+    --------------------------- */
+    @media (max-width: 560px){
+      .wrap{ padding: 10px; }
+      .app{
+        height: 100%;
+        width: 100%;
+        border-radius: 22px;
+      }
+
+      .topbar{
+        padding: calc(12px + var(--safe-t)) 12px 10px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .title{
+        min-width: unset;
+      }
+      .title h1{ font-size: 18px; }
+      .title p{ font-size: 12px; }
+
+      .controls{
+        justify-content: stretch;
+        gap: 10px;
+      }
+
+      .search{
+        width: 100%;
+        min-width: unset;
+      }
+      .search input{
+        padding: 12px 44px 12px 42px;
+        font-size: 14px; /* better on mobile */
+      }
+
+      .stat{
+        width: 100%;
+        justify-content: space-between;
+        padding: 10px 12px;
+      }
+
+      .content{
+        grid-template-columns: 1fr; /* remove desktop split */
+        padding: 10px;
+        gap: 10px;
+        position: relative;
+      }
+
+      /* Hide the desktop side panel; replaced by bottom sheet */
+      aside.panel.side{
+        display:none;
+      }
+
+      /* Grid density tuned for ~393px width: 3 columns feels right */
+      .grid{
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        padding: 10px;
+      }
+
+      .rune{
+        min-height: 124px;
+        padding: 11px;
+      }
+      .symbol{
+        width: 40px; height: 40px;
+        border-radius: 13px;
+        font-size: 20px;
+      }
+      .rune .name b{ font-size: 13px; }
+      .rune .name small{ font-size: 11.5px; }
+
+      .btn{
+        padding: 10px 8px;
+        border-radius: 13px;
+        font-size: 12px;
+      }
+
+      .hint{ display:none; }
+
+      .footer{
+        padding: 10px 12px calc(10px + var(--safe-b));
+      }
+
+      /* Bottom sheet */
+      .sheet{
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        border-radius: calc(var(--radius) + 6px);
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(0,0,0,.18);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow: 0 18px 60px rgba(0,0,0,.55);
+        overflow: hidden;
+        z-index: 50;
+
+        height: var(--sheet-collapsed);
+        transition: height .18s ease;
+        display:flex;
+        flex-direction: column;
+      }
+
+      body.sheet-open .sheet{
+        height: min(var(--sheet-expanded), calc(100% - 140px));
+      }
+
+      .sheet-hd{
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255,255,255,.10);
+        display:flex;
+        align-items:center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 56px;
+      }
+
+      .sheet-hd .left{
+        display:flex;
+        align-items:center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .sheet-handle{
+        width: 38px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.18);
+        margin: 0 auto 8px;
+      }
+
+      .sheet-title{
+        display:flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .sheet-title b{
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: .35px;
+        text-transform: uppercase;
+        font-weight: 900;
+      }
+      .sheet-title span{
+        font-size: 12px;
+        color: var(--muted2);
+        white-space: nowrap;
+        overflow:hidden;
+        text-overflow: ellipsis;
+        max-width: 210px;
+      }
+
+      .sheet-body{
+        padding: 12px;
+        overflow:auto;
+        min-height: 0;
+        -webkit-overflow-scrolling: touch;
+        display:flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .chips{
+        max-height: 160px;
+      }
+
+      textarea{
+        height: 110px;
+        font-size: 12.5px;
+      }
+
+      /* Make room so grid doesn't hide behind the collapsed sheet */
+      .panel.grid-panel{
+        padding-bottom: calc(var(--sheet-collapsed) + 10px);
+      }
+      body.sheet-open .panel.grid-panel{
+        padding-bottom: calc(min(var(--sheet-expanded), calc(100% - 140px)) + 10px);
+      }
+
+      /* Mobile-only top action button */
+      .mobile-actions{
+        display:flex;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .mobile-actions .mini-btn{
+        width: 100%;
+        padding: 10px 12px;
+      }
+    }
+
+    /* Desktop/tablet breakpoint behavior kept (your original) */
+    @media (max-width: 980px){
+      .content{ grid-template-columns: 1fr; }
+      .search{ width: 100%; min-width: unset; }
+      .title{ min-width: unset; }
+      .stat{ width: 100%; justify-content: space-between; }
     }
   </style>
 </head>
@@ -594,11 +809,16 @@
               <span id="subcount">0 runes</span>
             </div>
           </div>
+
+          <!-- Mobile quick actions (shown via CSS only on small screens) -->
+          <div class="mobile-actions" style="display:none;">
+            <button class="mini-btn" id="openSheet" type="button">Selection</button>
+          </div>
         </div>
       </div>
 
       <div class="content">
-        <section class="panel">
+        <section class="panel grid-panel">
           <div class="panel-hd">
             <div class="left">
               <h2>Runes</h2>
@@ -610,6 +830,7 @@
           <div class="grid" id="grid" tabindex="0" aria-label="Rune grid"></div>
         </section>
 
+        <!-- Desktop side panel (kept) -->
         <aside class="panel side">
           <div class="panel-hd">
             <div class="left">
@@ -649,6 +870,44 @@
           Auto-saves your selection locally.
         </div>
       </div>
+
+      <!-- Mobile bottom sheet (same content as selection panel) -->
+      <div class="sheet" id="sheet" aria-label="Selection sheet" style="display:none;">
+        <div class="sheet-hd" id="sheetToggle" role="button" tabindex="0" aria-expanded="false">
+          <div style="width:100%;">
+            <div class="sheet-handle" aria-hidden="true"></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <div class="sheet-title">
+                <b>Selection</b>
+                <span id="sheetSub">0 runes selected</span>
+              </div>
+              <div class="mini-actions">
+                <button class="mini-btn" id="copy_m" type="button">Copy</button>
+                <button class="mini-btn" id="undo_m" type="button">Undo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sheet-body">
+          <div class="chips" id="chips_m" aria-label="Selected runes list (mobile)"></div>
+
+          <div class="outbox">
+            <div class="row">
+              <b>Text output</b>
+              <div class="mini-actions">
+                <button class="mini-btn" id="closeSheet" type="button">Close</button>
+              </div>
+            </div>
+            <textarea id="out_m" readonly aria-label="Selected runes output (mobile)"></textarea>
+          </div>
+
+          <div style="color: var(--muted2); font-size: 12.5px; line-height: 1.45;">
+            <div style="margin-bottom:8px;"><b style="color:var(--muted)">Invertible rule:</b> only 16 runes allow inverted selections.</div>
+            <div>Non-invertible runes will show a disabled “Inverted” button.</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -683,7 +942,7 @@
       {name:"Othala",   symbol:"ᛟ"},
     ];
 
-    // Only these 16 can be inverted (same rule as your original)
+    // Only these 16 can be inverted
     const INVERTIBLE = new Set([
       "Fehu","Uruz","Thurisaz","Ansuz","Raidho","Kenaz","Wunjo","Nauthiz",
       "Perthro","Algiz","Tiwaz","Berkano","Ehwaz","Mannaz","Laguz","Othala"
@@ -692,6 +951,10 @@
     // --- STATE ---
     /** @type {{name:string, variant:"nor"|"inv"}[]} */
     let selected = [];
+
+    // Simple undo stack (snapshots)
+    /** @type {string[]} */
+    const undoStack = [];
 
     const els = {
       grid: document.getElementById("grid"),
@@ -706,9 +969,25 @@
       copy: document.getElementById("copy"),
       undo: document.getElementById("undo"),
       toast: document.getElementById("toast"),
+
+      // Mobile sheet elements
+      sheet: document.getElementById("sheet"),
+      sheetToggle: document.getElementById("sheetToggle"),
+      sheetSub: document.getElementById("sheetSub"),
+      chips_m: document.getElementById("chips_m"),
+      out_m: document.getElementById("out_m"),
+      copy_m: document.getElementById("copy_m"),
+      undo_m: document.getElementById("undo_m"),
+      closeSheet: document.getElementById("closeSheet"),
+      openSheet: document.getElementById("openSheet"),
+      mobileActions: document.querySelector(".mobile-actions"),
     };
 
     const STORAGE_KEY = "rune_selector_v2_selected";
+
+    function isMobile(){
+      return window.matchMedia && window.matchMedia("(max-width: 560px)").matches;
+    }
 
     function toast(msg){
       els.toast.textContent = msg;
@@ -718,9 +997,7 @@
     }
 
     function save(){
-      try{
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
-      }catch(e){}
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(selected)); }catch(e){}
     }
 
     function load(){
@@ -729,226 +1006,350 @@
         if(!raw) return;
         const parsed = JSON.parse(raw);
         if(Array.isArray(parsed)){
+          // Basic validation
           selected = parsed
             .filter(x => x && typeof x.name === "string" && (x.variant === "nor" || x.variant === "inv"))
-            .slice(0, 200);
+            .filter(x => RUNES.some(r => r.name === x.name))
+            .filter(x => x.variant === "nor" || INVERTIBLE.has(x.name));
         }
       }catch(e){}
     }
 
-    function setCounts(){
-      const n = selected.length;
-      els.count.textContent = String(n);
-      els.subcount.textContent = n === 1 ? "1 rune" : `${n} runes`;
+    function pushUndo(){
+      // Store snapshot
+      undoStack.push(JSON.stringify(selected));
+      // Keep it bounded
+      if(undoStack.length > 40) undoStack.shift();
     }
 
-    function renderOutput(){
-      const text = selected.map(x => x.variant === "inv" ? `${x.name} (Inv)` : x.name).join(", ");
+    function undo(){
+      const snap = undoStack.pop();
+      if(!snap) return;
+      try{
+        const prev = JSON.parse(snap);
+        if(Array.isArray(prev)){
+          selected = prev;
+          save();
+          renderAll();
+          toast("Undone");
+        }
+      }catch(e){}
+    }
+
+    function fmtEntry(x){
+      return x.variant === "inv" ? `${x.name} (Inv)` : x.name;
+    }
+
+    function updateCounts(){
+      const n = selected.length;
+      els.count.textContent = String(n);
+      els.subcount.textContent = `${n} rune${n===1?"":"s"}`;
+      if(els.sheetSub) els.sheetSub.textContent = `${n} rune${n===1?"":"s"} selected`;
+    }
+
+    function updateOutput(){
+      const text = selected.map(fmtEntry).join(", ");
       els.out.value = text;
-      setCounts();
+      if(els.out_m) els.out_m.value = text;
     }
 
     function renderChips(){
-      els.chips.innerHTML = "";
-      if(selected.length === 0){
-        const empty = document.createElement("div");
-        empty.style.color = "var(--muted2)";
-        empty.style.fontSize = "12.5px";
-        empty.textContent = "No runes yet. Pick from the grid.";
-        els.chips.appendChild(empty);
-        return;
-      }
-
-      selected.forEach((x, idx) => {
-        const chip = document.createElement("div");
-        chip.className = "chip";
-
+      const makeChip = (x, idx) => {
+        const div = document.createElement("div");
+        div.className = "chip";
         const tag = document.createElement("span");
-        tag.className = "tag" + (x.variant === "inv" ? " inv" : "");
-        tag.textContent = x.variant === "inv" ? "Inv" : "Nor";
-
-        const label = document.createElement("span");
-        label.textContent = x.name;
+        tag.className = "tag" + (x.variant==="inv" ? " inv" : "");
+        tag.textContent = x.variant==="inv" ? "Inv" : "Nor";
+        const name = document.createElement("span");
+        name.textContent = x.name;
+        name.style.opacity = ".95";
 
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.setAttribute("aria-label", `Remove ${x.name}`);
+        btn.setAttribute("aria-label", `Remove ${fmtEntry(x)}`);
         btn.textContent = "×";
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          pushUndo();
           selected.splice(idx, 1);
           save();
-          renderChips();
-          renderOutput();
+          renderAll();
         });
 
-        chip.appendChild(tag);
-        chip.appendChild(label);
-        chip.appendChild(btn);
-        els.chips.appendChild(chip);
+        div.appendChild(tag);
+        div.appendChild(name);
+        div.appendChild(btn);
+        return div;
+      };
+
+      els.chips.innerHTML = "";
+      if(els.chips_m) els.chips_m.innerHTML = "";
+
+      selected.forEach((x, idx) => {
+        els.chips.appendChild(makeChip(x, idx));
+        if(els.chips_m) els.chips_m.appendChild(makeChip(x, idx));
       });
+    }
+
+    function applyFilter(list, q){
+      const s = (q || "").trim().toLowerCase();
+      if(!s) return list;
+      return list.filter(r => r.name.toLowerCase().includes(s));
+    }
+
+    function renderGrid(){
+      const q = els.search.value || "";
+      const filtered = applyFilter(RUNES, q);
+
+      els.grid.innerHTML = "";
+
+      // Match info
+      if(q.trim()){
+        els.matchInfo.textContent = `${filtered.length} match${filtered.length===1?"":"es"}`;
+      }else{
+        els.matchInfo.textContent = "";
+      }
+
+      const frag = document.createDocumentFragment();
+
+      filtered.forEach(r => {
+        const card = document.createElement("div");
+        card.className = "rune";
+        card.tabIndex = 0;
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+
+        const name = document.createElement("div");
+        name.className = "name";
+        const b = document.createElement("b");
+        b.textContent = r.name;
+        const small = document.createElement("small");
+        small.textContent = INVERTIBLE.has(r.name) ? "Invertible" : "Not invertible";
+        name.appendChild(b);
+        name.appendChild(small);
+
+        const sym = document.createElement("div");
+        sym.className = "symbol";
+        sym.textContent = r.symbol;
+
+        meta.appendChild(name);
+        meta.appendChild(sym);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const btnNor = document.createElement("button");
+        btnNor.className = "btn primary";
+        btnNor.type = "button";
+        btnNor.textContent = "Norm";
+        btnNor.addEventListener("click", (e) => {
+          e.stopPropagation();
+          addRune(r.name, "nor");
+        });
+
+        const btnInv = document.createElement("button");
+        btnInv.className = "btn inv";
+        btnInv.type = "button";
+        btnInv.textContent = "Inv.";
+        const canInv = INVERTIBLE.has(r.name);
+        btnInv.disabled = !canInv;
+        btnInv.title = canInv ? "Add inverted" : "This rune cannot be inverted";
+        btnInv.addEventListener("click", (e) => {
+          e.stopPropagation();
+          addRune(r.name, "inv");
+        });
+
+        actions.appendChild(btnNor);
+        actions.appendChild(btnInv);
+
+        // Shift + click on tile: add inverted if allowed, else normal
+        card.addEventListener("click", (e) => {
+          const wantInv = !!e.shiftKey;
+          if(wantInv && INVERTIBLE.has(r.name)){
+            addRune(r.name, "inv");
+          }else{
+            addRune(r.name, "nor");
+          }
+        });
+
+        // Keyboard: Enter adds normal; Shift+Enter adds inv if allowed
+        card.addEventListener("keydown", (e) => {
+          if(e.key === "Enter"){
+            e.preventDefault();
+            if(e.shiftKey && INVERTIBLE.has(r.name)) addRune(r.name, "inv");
+            else addRune(r.name, "nor");
+          }
+        });
+
+        card.appendChild(meta);
+        card.appendChild(actions);
+        frag.appendChild(card);
+      });
+
+      els.grid.appendChild(frag);
     }
 
     function addRune(name, variant){
       if(variant === "inv" && !INVERTIBLE.has(name)){
-        toast(`${name} cannot be inverted.`);
+        toast("This rune can’t be inverted");
         return;
       }
+      pushUndo();
       selected.push({name, variant});
       save();
-      renderChips();
-      renderOutput();
+      renderAll();
+      toast(variant === "inv" ? `${name} (Inv) added` : `${name} added`);
+
+      // On mobile, open sheet briefly for feedback (collapsed -> expanded)
+      if(isMobile()){
+        openSheet();
+      }
     }
 
-    function undo(){
-      if(selected.length === 0) return;
-      selected.pop();
-      save();
-      renderChips();
-      renderOutput();
-    }
-
-    function reset(){
-      selected = [];
-      save();
-      renderChips();
-      renderOutput();
-      toast("Reset.");
-    }
-
-    function copy(){
+    async function copyOut(){
       const text = els.out.value || "";
-      if(!text){
-        toast("Nothing to copy.");
+      if(!text.trim()){
+        toast("Nothing to copy");
         return;
       }
-
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(text).then(() => toast("Copied."));
-      }else{
-        els.out.focus();
-        els.out.select();
-        document.execCommand("copy");
-        window.getSelection().removeAllRanges();
-        toast("Copied.");
+      try{
+        await navigator.clipboard.writeText(text);
+        toast("Copied");
+      }catch(e){
+        // Fallback
+        const ta = isMobile() && els.out_m ? els.out_m : els.out;
+        ta.focus();
+        ta.select();
+        try{
+          document.execCommand("copy");
+          toast("Copied");
+        }catch(err){
+          toast("Copy failed");
+        }
+        ta.setSelectionRange(ta.value.length, ta.value.length);
       }
     }
 
-    function makeRuneCard(r){
-      const card = document.createElement("div");
-      card.className = "rune";
-      card.dataset.name = r.name;
-
-      const meta = document.createElement("div");
-      meta.className = "meta";
-
-      const left = document.createElement("div");
-      left.className = "name";
-      const b = document.createElement("b");
-      b.textContent = r.name;
-      const sm = document.createElement("small");
-      sm.textContent = INVERTIBLE.has(r.name) ? "Invertible" : "Not invertible";
-      left.appendChild(b);
-      left.appendChild(sm);
-
-      const sym = document.createElement("div");
-      sym.className = "symbol";
-      sym.textContent = r.symbol;
-
-      meta.appendChild(left);
-      meta.appendChild(sym);
-
-      const actions = document.createElement("div");
-      actions.className = "actions";
-
-      const nor = document.createElement("button");
-      nor.className = "btn primary";
-      nor.type = "button";
-      nor.textContent = "Norm";
-      nor.addEventListener("click", () => addRune(r.name, "nor"));
-
-      const inv = document.createElement("button");
-      inv.className = "btn inv";
-      inv.type = "button";
-      inv.textContent = "Inv.";
-      inv.disabled = !INVERTIBLE.has(r.name);
-      inv.title = inv.disabled ? "This rune is not invertible." : "Add inverted rune";
-      inv.addEventListener("click", () => addRune(r.name, "inv"));
-
-      actions.appendChild(nor);
-      actions.appendChild(inv);
-
-      // Shift+click anywhere on card = inverted (if allowed), else normal
-      card.addEventListener("click", (e) => {
-        // ignore clicks on buttons (already handled)
-        if(e.target && e.target.closest("button")) return;
-        const variant = e.shiftKey ? "inv" : "nor";
-        addRune(r.name, variant);
-      });
-
-      // Keyboard: Enter = normal; Shift+Enter = inverted (if allowed)
-      card.tabIndex = 0;
-      card.setAttribute("role", "button");
-      card.setAttribute("aria-label", `${r.name}. Enter to add normal. Shift+Enter to add inverted if allowed.`);
-      card.addEventListener("keydown", (e) => {
-        if(e.key !== "Enter") return;
-        const variant = e.shiftKey ? "inv" : "nor";
-        addRune(r.name, variant);
-      });
-
-      card.appendChild(meta);
-      card.appendChild(actions);
-      return card;
+    function resetAll(){
+      if(selected.length === 0){
+        toast("Already empty");
+        return;
+      }
+      pushUndo();
+      selected = [];
+      save();
+      renderAll();
+      toast("Reset");
     }
 
-    function renderGrid(){
-      const q = (els.search.value || "").trim().toLowerCase();
-      els.grid.innerHTML = "";
+    function renderAll(){
+      renderGrid();
+      renderChips();
+      updateCounts();
+      updateOutput();
+      syncMobileMirror();
+    }
 
-      const items = RUNES.filter(r => r.name.toLowerCase().includes(q));
-      items.forEach(r => els.grid.appendChild(makeRuneCard(r)));
+    /* ---------------- Mobile sheet behavior ---------------- */
+    function ensureMobileShell(){
+      const mobile = isMobile();
 
-      if(q){
-        els.matchInfo.textContent = `${items.length} match${items.length === 1 ? "" : "es"}`;
+      // Show/hide the sheet and mobile action button based on viewport
+      if(mobile){
+        els.sheet.style.display = "";
+        if(els.mobileActions) els.mobileActions.style.display = "flex";
       }else{
-        els.matchInfo.textContent = "";
+        els.sheet.style.display = "none";
+        if(els.mobileActions) els.mobileActions.style.display = "none";
+        document.body.classList.remove("sheet-open");
+        if(els.sheetToggle) els.sheetToggle.setAttribute("aria-expanded", "false");
       }
     }
 
-    // --- EVENTS ---
-    els.search.addEventListener("input", renderGrid);
+    function openSheet(){
+      if(!isMobile()) return;
+      document.body.classList.add("sheet-open");
+      els.sheetToggle.setAttribute("aria-expanded", "true");
+    }
 
+    function closeSheet(){
+      document.body.classList.remove("sheet-open");
+      els.sheetToggle.setAttribute("aria-expanded", "false");
+    }
+
+    function toggleSheet(){
+      if(!isMobile()) return;
+      if(document.body.classList.contains("sheet-open")) closeSheet();
+      else openSheet();
+    }
+
+    function syncMobileMirror(){
+      // outputs + chips already mirrored by renderChips/updateOutput
+      // just keep header subtitle fresh
+      if(els.sheetSub){
+        const n = selected.length;
+        els.sheetSub.textContent = `${n} rune${n===1?"":"s"} selected`;
+      }
+    }
+
+    /* ---------------- INIT + EVENTS ---------------- */
+    load();
+
+    // Events
+    els.search.addEventListener("input", () => renderGrid());
     els.clearSearch.addEventListener("click", () => {
       els.search.value = "";
-      renderGrid();
       els.search.focus();
+      renderGrid();
     });
 
-    els.reset.addEventListener("click", reset);
+    els.reset.addEventListener("click", resetAll);
+    els.copy.addEventListener("click", copyOut);
     els.undo.addEventListener("click", undo);
-    els.copy.addEventListener("click", copy);
 
-    // Backspace = undo, unless typing in an input
+    // Mobile mirrored actions
+    if(els.copy_m) els.copy_m.addEventListener("click", copyOut);
+    if(els.undo_m) els.undo_m.addEventListener("click", undo);
+    if(els.closeSheet) els.closeSheet.addEventListener("click", closeSheet);
+    if(els.openSheet) els.openSheet.addEventListener("click", toggleSheet);
+
+    // Toggle sheet by tapping its header
+    if(els.sheetToggle){
+      els.sheetToggle.addEventListener("click", (e) => {
+        // avoid toggling when user taps copy/undo buttons in header
+        const t = e.target;
+        if(t && (t.id === "copy_m" || t.id === "undo_m")) return;
+        toggleSheet();
+      });
+      els.sheetToggle.addEventListener("keydown", (e) => {
+        if(e.key === "Enter" || e.key === " "){
+          e.preventDefault();
+          toggleSheet();
+        }
+      });
+    }
+
+    // Backspace = undo (when not typing into an input)
     window.addEventListener("keydown", (e) => {
-      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+      const tag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : "";
       const typing = tag === "input" || tag === "textarea";
-      if(typing) return;
-
-      if(e.key === "Backspace"){
+      if(!typing && e.key === "Backspace"){
         e.preventDefault();
         undo();
       }
-
-      // Ctrl/Cmd + C = copy output
-      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c"){
-        copy();
-      }
     });
 
-    // --- INIT ---
-    load();
-    renderGrid();
-    renderChips();
-    renderOutput();
+    // Keep mobile/desktop layout in sync on resize/orientation change
+    window.addEventListener("resize", () => {
+      ensureMobileShell();
+      // Re-render grid to adapt columns/spacing; cheap enough
+      renderGrid();
+    });
+
+    // First paint
+    ensureMobileShell();
+    renderAll();
   </script>
 </body>
 </html>
